@@ -235,12 +235,12 @@
 
     <div class="quote-card" id="quote">
       <h3>Get a quote</h3>
-      <form action="results.html" method="get">
+      <form id="quote-form">
         <div class="quote-grid">
           <div class="field full">
             <label for="airport">Airport</label>
             <select id="airport" name="airport">
-              <option>Gatwick Airport</option>
+              <option value="LGW">Gatwick Airport</option>
             </select>
           </div>
           <div class="field">
@@ -249,7 +249,7 @@
           </div>
           <div class="field">
             <label for="dropoff-time">Drop-off time</label>
-            <input type="time" id="dropoff-time" name="dropoff-time">
+            <input type="time" id="dropoff-time" name="dropoff-time" value="12:00">
           </div>
           <div class="field">
             <label for="pickup-date">Pick-up date</label>
@@ -257,7 +257,7 @@
           </div>
           <div class="field">
             <label for="pickup-time">Pick-up time</label>
-            <input type="time" id="pickup-time" name="pickup-time">
+            <input type="time" id="pickup-time" name="pickup-time" value="12:00">
           </div>
           <div class="field full">
             <label for="promo">Promo code (optional)</label>
@@ -270,6 +270,42 @@
     </div>
   </div>
 </section>
+
+<script>
+  document.getElementById('quote-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const airport = document.getElementById('airport').value || 'LGW';
+    const dropoffDate = document.getElementById('dropoff-date').value;
+    const dropoffTime = document.getElementById('dropoff-time').value || '12:00';
+    const pickupDate = document.getElementById('pickup-date').value;
+    const pickupTime = document.getElementById('pickup-time').value || '12:00';
+    const promo = document.getElementById('promo').value;
+
+    // ParkFlow's widget reads "arrival" and "departure" straight off this page's URL,
+    // in YYYYMMDDHHmm (12-digit, 24hr) format. Its naming is from the car's perspective:
+    // arrival = when the car arrives at the compound (your drop-off),
+    // departure = when the car leaves the compound (your pick-up).
+    function toParkflow(dateStr, timeStr){
+      if (!dateStr) return '';
+      const datePart = dateStr.replace(/-/g, '');
+      const timePart = (timeStr || '12:00').replace(':', '');
+      return datePart + timePart;
+    }
+
+    const arrival = toParkflow(dropoffDate, dropoffTime);   // drop-off
+    const departure = toParkflow(pickupDate, pickupTime);   // pick-up
+
+    const params = new URLSearchParams();
+    params.set('arrival', arrival);
+    params.set('departure', departure);
+    if (promo){ params.set('discount', promo); }   // ParkFlow's own discount param
+    params.set('promocode', promo || '');
+    params.set('airport', airport);
+    params.set('product', '');
+
+    window.location.href = 'search.html?' + params.toString();
+  });
+</script>
 
 <section id="compare" class="steps-wrap">
   <div class="section-head center">
@@ -408,13 +444,13 @@
         <div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:0.85rem;"><b style="display:block;font-size:0.92rem;margin-bottom:2px;">24/7 CCTV compound</b><span style="color:var(--ink-soft);">Recorded handover bay</span></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a class="btn-primary" href="https://zebragatwickparking.parkflow.io" target="_blank" rel="noopener">Get a quote</a>
+        <a class="btn-primary" href="#quote">Get a quote</a>
         <a href="https://www.zebraparkinggatwick.com" target="_blank" rel="noopener" style="background:transparent;color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;padding:13px 22px;border-radius:10px;border:1.5px solid var(--line);display:inline-block;">Visit their site</a>
       </div>
     </div>
     <div style="background:var(--cream);border-radius:16px;padding:26px;align-self:start;">
       <div style="color:var(--ink-soft);font-size:0.85rem;margin-bottom:2px;">Prices from</div>
-      <div style="font-size:2.4rem;font-weight:800;letter-spacing:-0.02em;line-height:1;">£4.99<span style="font-size:1rem;font-weight:600;color:var(--ink-soft);">/day</span></div>
+      <parkflow-widget parking="3dcd4a5b-f6a4-4715-9a6e-6e367ba7cfc5" tenant="zebragatwickparking.parkflow.io" type="Pricing" locale="en" color="#ED7D31"></parkflow-widget>
       <div style="display:flex;align-items:center;gap:6px;margin:16px 0 20px;font-size:0.9rem;"><span style="color:var(--orange);letter-spacing:1px;">★★★★★</span><span>Trusted meet &amp; greet operator</span></div>
       <ul style="list-style:none;display:flex;flex-direction:column;gap:9px;">
         <li style="display:flex;gap:9px;font-size:0.87rem;">✓ No card fees</li>
@@ -599,6 +635,17 @@
   </div>
   <div class="footer-bottom wrap">© 2026 deals4airportparking.com — booking happens on the operator's own site.</div>
 </footer>
+
+<script src="//widget.parkflow.io/elements/parkflow-widget.js" async crossorigin type="text/javascript"></script>
+<script>
+  function toggleWidget(id, btn){
+    const panel = document.getElementById(id);
+    const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+    panel.style.maxHeight = isOpen ? '0' : '800px';
+    btn.textContent = isOpen ? 'Get a quote' : 'Hide booking form';
+    if (!isOpen){ panel.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  }
+</script>
 
 </body>
 </html>
